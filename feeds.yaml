@@ -1,0 +1,140 @@
+# embedded-digest 소스 설정
+# 코드를 고치지 않고 이 파일만 수정해서 소스를 추가/제거합니다.
+# 검증: python tools/check_feeds.py
+
+# 섹션별 / 전체 최대 항목 수
+limits:
+  per_section: 5
+  total: 20
+  releases: 8          # 릴리스는 저빈도라 조금 넉넉하게
+  max_age_hours: 36    # 이보다 오래된 항목은 버림 (첫 실행 폭주 방지)
+
+# 요약 시 우선순위를 올릴 키워드.
+# ~/hdd/git 저장소 147개에서 실제로 다루는 대상을 반영했습니다.
+interests:
+  # MCU / SoC — 직접 쓰는 것
+  - STM32            # F1 F4 C0 G4 H5 H7 H7RS N6 U5 WBA MP1 전 계열
+  - STM32MP1
+  - STM32N6
+  - ESP32            # S3 C6 P4
+  - ESP-IDF
+  - RP2040
+  - RP2350
+  - nRF52
+  - nRF54L15
+  - CH32             # WCH RISC-V
+  - GD32
+  - AT32F403A
+  - AT32F405
+  - APM32
+  - Nuvoton          # M480 M483 NUC029 NU40DK NU54DK
+  - HPMicro          # HPM5300
+  - Renesas RA
+  - i.MX RT          # Teensy 4.x
+  - AVR128DA
+  - STM8
+  - TI AM263
+  - PAN1080
+
+  # 키보드 펌웨어 — 비중 큼
+  - QMK
+  - ZMK
+  - RMK              # Rust 키보드 펌웨어
+  - Vial
+  - VIA
+  - Hall effect 키보드
+  - 자석축 / 홀센서 스위치
+
+  # RTOS / 프레임워크
+  - Zephyr
+  - Arduino core     # stm32duino, arduino-esp32, nRF54 core
+  - FreeRTOS
+  - TinyUSB
+  - LVGL
+  - MicroPython
+
+  # 툴체인 / 디버깅
+  - OpenOCD
+  - pyOCD
+  - probe-rs
+  - CMSIS-DAP / DAPLink
+  - UF2 부트로더
+  - picotool
+  - KiCad
+
+  # 통신 / 주변장치
+  - CAN / FDCAN
+  - EtherCAT
+  - LAN9253
+  - WIZnet           # W5300 W5500 W7500 W6300
+  - BLE / btstack
+  - USB HID
+
+  # 기타 관심 영역
+  - SimpleFOC / BLDC
+  - Buildroot
+  - 임베디드 리눅스
+  - RISC-V
+  - Allwinner T113
+  - Gowin
+  - Xilinx
+  - Jetson
+
+sections:
+  news:              # 신규 칩/보드, 업계 뉴스
+    - https://www.cnx-software.com/feed/
+    - https://hackaday.com/blog/feed/
+    - https://www.embedded.com/feed/
+    # 노이즈가 많아 기본 비활성. 필요하면 주석 해제:
+    # - https://blog.adafruit.com/feed/
+    # - https://www.eevblog.com/feed/
+
+  articles:          # 읽을 만한 기술 글
+    - https://interrupt.memfault.com/feed.xml
+    - https://embeddedartistry.com/feed/
+
+  community:         # 커뮤니티 화제
+    # Reddit은 IP 레이트리밋(429)이 잦습니다. 실패해도 전체 실행은 계속되고
+    # 다이제스트 하단에 실패 목록으로 표시됩니다.
+    - https://www.reddit.com/r/embedded/.rss
+    - https://www.reddit.com/r/PrintedCircuitBoard/.rss
+    - https://www.reddit.com/r/FPGA/.rss
+    - https://hnrss.org/newest?q=embedded+OR+firmware+OR+microcontroller&points=50
+
+  releases:          # SDK / 툴 릴리스
+    # RTOS / SDK
+    - https://github.com/zephyrproject-rtos/zephyr/releases.atom
+    - https://github.com/raspberrypi/pico-sdk/releases.atom
+    - https://github.com/espressif/esp-idf/releases.atom
+    - https://github.com/nrfconnect/sdk-nrf/releases.atom
+    - https://github.com/hpmicro/hpm_sdk/releases.atom
+    - https://github.com/OpenNuvoton/M480BSP/releases.atom
+    # STM32Cube — 실제로 쓰는 시리즈만
+    - https://github.com/STMicroelectronics/STM32CubeH7/releases.atom
+    - https://github.com/STMicroelectronics/STM32CubeH5/releases.atom
+    - https://github.com/STMicroelectronics/STM32CubeN6/releases.atom
+    - https://github.com/STMicroelectronics/STM32CubeWBA/releases.atom
+    # Arduino core
+    - https://github.com/stm32duino/Arduino_Core_STM32/releases.atom
+    - https://github.com/espressif/arduino-esp32/releases.atom
+    # 키보드
+    - https://github.com/qmk/qmk_firmware/releases.atom
+    - https://github.com/zmkfirmware/zmk/releases.atom
+    - https://github.com/zmkfirmware/zmk-studio/releases.atom
+    - https://github.com/HaoboGu/rmk/releases.atom
+    - https://github.com/vial-kb/vial-gui/releases.atom
+    # 라이브러리
+    - https://github.com/hathach/tinyusb/releases.atom
+    - https://github.com/lvgl/lvgl/releases.atom
+    - https://github.com/bluekitchen/btstack/releases.atom
+    - https://github.com/simplefoc/Arduino-FOC/releases.atom
+    - https://github.com/Wiznet/ioLibrary_Driver/releases.atom
+    - https://github.com/micropython/micropython/releases.atom
+    # 툴체인 / 디버거
+    - https://github.com/openocd-org/openocd/releases.atom
+    - https://github.com/pyocd/pyOCD/releases.atom
+    - https://github.com/probe-rs/probe-rs/releases.atom
+    - https://github.com/raspberrypi/picotool/releases.atom
+    # GitHub가 아닌 곳
+    - https://gitlab.com/kicad/code/kicad/-/tags?format=atom
+    - https://github.com/buildroot/buildroot/tags.atom
