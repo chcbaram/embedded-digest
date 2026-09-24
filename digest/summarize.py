@@ -114,7 +114,12 @@ def summarize(entries, interests: list[str], model: str | None = None) -> tuple[
         return [], True
 
     model = model or os.environ.get("ANTHROPIC_MODEL", DEFAULT_MODEL)
-    client = anthropic.Anthropic()
+    try:
+        client = anthropic.Anthropic()
+    except anthropic.AnthropicError as e:
+        # 키 미설정 등 설정 오류. 다이제스트 자체는 제목+링크로 나가야 한다.
+        log.error("Claude 클라이언트 생성 실패: %s", e)
+        return [], False
 
     results: list[dict] = []
     for i in range(0, len(entries), BATCH_SIZE):
@@ -123,12 +128,11 @@ def summarize(entries, interests: list[str], model: str | None = None) -> tuple[
             try:
                 results.extend(_call(client, model, batch, interests))
                 break
-            except (json.JSONDecodeError, KeyError, StopIteration) as e:
-                log.warning("배치 %d 파싱 실패 (%d회차): %s", i // BATCH_SIZE, attempt, e)
-                if attempt == 2:
-                    return [], False
-            except anthropic.APIError as e:
-                log.warning("배치 %d API 오류 (%d회차): %s", i // BATCH_SIZE, attempt, e)
+            except Exception as e:  # noqa: BLE001 - 어떤 실패든 제목+링크 폴백으로 간다
+                kind = ("파싱 실패" if isinstance(e, (json.JSONDecodeError, KeyError,
+                                                     StopIteration)) else "호출 실패")
+                log.warning("배치 %d %s (%d회차): %s: %s",
+                            i // BATCH_SIZE, kind, attempt, type(e).__name__, e)
                 if attempt == 2:
                     return [], False
 
