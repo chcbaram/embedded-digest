@@ -55,20 +55,21 @@ def main(argv=None) -> int:
     log.info("중복 제거 후: %d개 (기존 seen %d개)", len(new_entries), len(seen))
 
     # 3. 요약
-    summarized = True
+    note = None
     if args.no_summary:
         items = [{"id": e.id, "section": e.section, "importance": 1,
                   "title_ko": "", "summary_ko": "", "reason": ""}
                  for e in new_entries]
-        summarized = False
+        log.info("요약 생략 (--no-summary)")
     else:
-        raw, summarized = summarize.summarize(new_entries, interests)
-        if summarized:
+        raw, ok = summarize.summarize(new_entries, interests)
+        if ok:
             items = raw
             log.info("요약: %d개 항목 유지 (%d개 제외)",
                      len(items), len(new_entries) - len(items))
         else:
             log.warning("요약 실패 — 제목과 링크만 전송합니다")
+            note = "요약 생성에 실패해서 제목과 링크만 전달합니다."
             items = [{"id": e.id, "section": e.section, "importance": 1,
                       "title_ko": "", "summary_ko": "", "reason": ""}
                      for e in new_entries]
@@ -79,8 +80,8 @@ def main(argv=None) -> int:
 
     date = datetime.now().strftime("%Y-%m-%d")
     subject = f"임베디드 다이제스트 · {date} ({len(picked)}건)"
-    md = render.markdown(picked, result.failures, date, summarized)
-    blocks = render.slack_blocks(picked, result.failures, date, summarized)
+    md = render.markdown(picked, result.failures, date, note)
+    blocks = render.slack_blocks(picked, result.failures, date, note)
 
     # 4. 전달
     if args.dry_run:

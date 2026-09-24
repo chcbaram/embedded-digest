@@ -36,9 +36,22 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | `interests` | 요약할 때 중요도를 올릴 키워드 |
 | `sections` | `news` / `articles` / `community` / `releases` 별 피드 URL |
 
+## 요약 모드
+
+현재 기본값은 **요약 없이(`--no-summary`) 발행**입니다. LLM을 호출하지 않으므로 비용이 없고,
+수집·중복 제거·섹션 분류·상한 적용은 그대로 동작해 제목과 링크만 정리해서 보냅니다.
+
+LLM 요약을 켜려면 `ANTHROPIC_API_KEY` Secret을 등록하고:
+
+```bash
+gh variable set SUMMARIZE --body true
+```
+
+수동 실행 시에는 Run workflow 화면의 `summarize` 체크박스로 한 번만 켤 수도 있습니다.
+
 ## 전달 채널
 
-`NOTIFIERS` 환경변수로 고릅니다(쉼표 구분). 기본값 `slack,github_issue`.
+`NOTIFIERS` 환경변수로 고릅니다(쉼표 구분). 기본값 `github_issue`.
 한 채널이 실패해도 나머지는 전송하고, 전부 실패했을 때만 `seen.json`을 갱신하지 않습니다.
 
 | 채널 | 필요한 환경변수 |
@@ -53,14 +66,15 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 **Secrets** (Settings → Secrets and variables → Actions)
 
-- `ANTHROPIC_API_KEY` — 필수
+- `ANTHROPIC_API_KEY` — LLM 요약(`SUMMARIZE=true`)을 쓸 때만 필요
 - `SLACK_WEBHOOK_URL` — Slack을 쓸 때만. 없으면 로그에 경고만 남기고 건너뜁니다.
 - `GITHUB_TOKEN`은 Actions가 자동으로 제공하므로 등록하지 않습니다.
 
 **Variables** (선택)
 
 - `ANTHROPIC_MODEL` — 기본 `claude-sonnet-5`. 비용을 줄이려면 `claude-haiku-4-5`.
-- `NOTIFIERS` — 기본 `slack,github_issue`.
+- `NOTIFIERS` — 기본 `github_issue`. Slack을 추가하려면 `slack,github_issue`.
+- `SUMMARIZE` — 기본 `false`. `true`로 두면 LLM 요약을 사용합니다.
 
 수동 실행은 Actions 탭 → `daily-digest` → Run workflow. `dry_run` 체크 시 전송 없이 로그만 남습니다.
 

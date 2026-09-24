@@ -12,10 +12,14 @@
 - 실행 환경: GitHub Actions cron. 매일 07:00 KST에 실행합니다(UTC 기준 `0 22 * * *`).
 - 상태 저장: 처리한 항목 ID를 저장소 파일(`state/seen.json`)에 커밋해 중복 전송을 막습니다. DB는 쓰지 않습니다.
 - 설정: 소스 목록과 관심 키워드는 `feeds.yaml` 하나로 관리합니다. 코드를 수정하지 않고 소스를 추가하거나 뺄 수 있어야 합니다.
-- 전달 채널: **Slack(Incoming Webhook) + GitHub 이슈**. `notifiers/`는 플러그인 구조이고
+- 전달 채널: **GitHub 이슈**(기본). Slack(Incoming Webhook)도 구현되어 있으며 `NOTIFIERS`로 추가합니다. `notifiers/`는 플러그인 구조이고
   `NOTIFIERS` 환경변수로 고릅니다. 메일(SMTP)도 구현되어 있으나 기본값은 아닙니다.
-- 요약 모델: **`claude-sonnet-5`** (`ANTHROPIC_MODEL` 환경변수로 교체 가능).
-  비용을 줄이려면 `claude-haiku-4-5`로 바꿉니다.
+- 요약: **현재 꺼져 있습니다(`--no-summary`)**. API가 구독과 별도 과금이라 보류한 상태이고,
+  수집·중복 제거·분류·상한은 그대로 돌아 제목+링크 다이제스트를 발행합니다.
+  켤 때는 `ANTHROPIC_API_KEY` 등록 후 `gh variable set SUMMARIZE --body true`.
+  모델은 `claude-sonnet-5`(`ANTHROPIC_MODEL`로 교체 가능, 비용 우선이면 `claude-haiku-4-5`).
+  나중에 로컬 LLM으로 간다면 `digest/summarize.py`의 `_call()`만 교체하면 되지만,
+  Actions 러너에서는 로컬 LLM에 접근할 수 없으므로 실행 자체를 로컬 cron으로 옮겨야 합니다.
 - 항목 수: 섹션당 5개, 전체 20개, 릴리스만 8개. `feeds.yaml`의 `limits`에서 조정합니다.
 - 수집 범위: 최근 36시간(`limits.max_age_hours`). 첫 실행에서 과거 항목이 쏟아지지 않게 합니다.
 
@@ -81,7 +85,7 @@ IP 단위 레이트리밋(HTTP 429)입니다. 피드 자체는 유효하며 Acti
 
 1. [x] `feeds.yaml`의 URL 유효성 검증 스크립트 작성, 죽은 피드 수정
 2. [x] fetch → dedup → `--dry-run`으로 원문 목록 출력 확인
-3. [ ] summarize를 붙이고 프롬프트 튜닝 (노이즈 비율 확인) — **API 키 설정 후 진행**
+3. [ ] summarize를 붙이고 프롬프트 튜닝 — **보류**. API 과금이 구독과 별개라 로컬 LLM 검토 중
 4. [x] notifier 구현 (slack, github_issue, email)
 5. [x] GitHub Actions 워크플로 + `seen.json` 자동 커밋
 6. [ ] 1주일 운영 후 소스 가감, 섹션별 항목 수 조정

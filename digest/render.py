@@ -36,23 +36,31 @@ def _group(items: list[dict]) -> list[tuple[str, list[dict]]]:
             if any(i["section"] == s for i in items)]
 
 
+def _star(item: dict) -> str:
+    """요약이 없는 모드에서는 중요도가 의미 없으므로 별을 붙이지 않는다."""
+    if not (item.get("summary_ko") or item.get("reason")):
+        return ""
+    return STAR.get(item.get("importance", 1), "")
+
+
 def markdown(items: list[dict], failures: list[tuple[str, str]],
-             date: str | None = None, summarized: bool = True) -> str:
+             date: str | None = None, note: str | None = None) -> str:
     date = date or datetime.now().strftime("%Y-%m-%d")
     out = [f"# 임베디드 다이제스트 · {date}", ""]
 
     if not items:
         out.append("오늘은 새로 올라온 항목이 없습니다.")
-    if not summarized:
-        out.append("> 요약 생성에 실패해서 제목과 링크만 전달합니다.\n")
+    if note:
+        out.append(f"> {note}\n")
 
     for section, rows in _group(items):
         out.append(f"## {SECTION_TITLE[section]}")
         out.append("")
         for r in rows:
-            star = STAR.get(r.get("importance", 1), "")
+            star = _star(r)
             title = r.get("title_ko") or r.get("title_orig", "")
-            out.append(f"### {star} [{title}]({r['link']})")
+            heading = f"### {star} [{title}]" if star else f"### [{title}]"
+            out.append(f"{heading}({r['link']})")
             if r.get("title_ko") and r.get("title_orig") and r["title_ko"] != r["title_orig"]:
                 out.append(f"<sub>{r['title_orig']}</sub>")
             out.append("")
@@ -77,7 +85,7 @@ def markdown(items: list[dict], failures: list[tuple[str, str]],
 
 
 def slack_blocks(items: list[dict], failures: list[tuple[str, str]],
-                 date: str | None = None, summarized: bool = True) -> list[dict]:
+                 date: str | None = None, note: str | None = None) -> list[dict]:
     date = date or datetime.now().strftime("%Y-%m-%d")
     blocks: list[dict] = [{
         "type": "header",
@@ -87,18 +95,18 @@ def slack_blocks(items: list[dict], failures: list[tuple[str, str]],
     if not items:
         blocks.append({"type": "section",
                        "text": {"type": "mrkdwn", "text": "오늘은 새로 올라온 항목이 없습니다."}})
-    if not summarized:
-        blocks.append({"type": "context", "elements": [
-            {"type": "mrkdwn", "text": "요약 생성에 실패해서 제목과 링크만 전달합니다."}]})
+    if note:
+        blocks.append({"type": "context",
+                       "elements": [{"type": "mrkdwn", "text": note}]})
 
     for section, rows in _group(items):
         blocks.append({"type": "divider"})
         blocks.append({"type": "section",
                        "text": {"type": "mrkdwn", "text": f"*{SECTION_TITLE[section]}*"}})
         for r in rows:
-            star = STAR.get(r.get("importance", 1), "")
+            star = _star(r)
             title = r.get("title_ko") or r.get("title_orig", "")
-            lines = [f"{star} *<{r['link']}|{title}>*"]
+            lines = [f"{star} *<{r['link']}|{title}>*".lstrip()]
             if r.get("summary_ko"):
                 lines.append(r["summary_ko"])
             blocks.append({"type": "section",

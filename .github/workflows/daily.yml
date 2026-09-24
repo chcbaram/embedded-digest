@@ -10,6 +10,10 @@ on:
         description: "전송하지 않고 로그에만 출력"
         type: boolean
         default: false
+      summarize:
+        description: "LLM 요약 사용 (ANTHROPIC_API_KEY 필요)"
+        type: boolean
+        default: false
       notifiers:
         description: "전달 채널 (쉼표 구분). 비우면 저장소 변수/기본값 사용"
         type: string
@@ -42,9 +46,18 @@ jobs:
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-sonnet-5' }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NOTIFIERS: ${{ inputs.notifiers || vars.NOTIFIERS || 'slack,github_issue' }}
+          NOTIFIERS: ${{ inputs.notifiers || vars.NOTIFIERS || 'github_issue' }}
+          # LLM 요약을 켜려면: gh variable set SUMMARIZE --body true  (+ ANTHROPIC_API_KEY 등록)
+          IN_SUMMARIZE: ${{ inputs.summarize }}
+          VAR_SUMMARIZE: ${{ vars.SUMMARIZE }}
+          IN_DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          python main.py ${{ inputs.dry_run && '--dry-run' || '' }}
+          SUMMARIZE="${IN_SUMMARIZE:-${VAR_SUMMARIZE:-false}}"
+          ARGS=""
+          if [ "$SUMMARIZE" != "true" ]; then ARGS="$ARGS --no-summary"; fi
+          if [ "${IN_DRY_RUN:-false}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          echo "실행: python main.py$ARGS"
+          python main.py $ARGS
 
       - name: seen.json 커밋
         if: ${{ !inputs.dry_run }}
